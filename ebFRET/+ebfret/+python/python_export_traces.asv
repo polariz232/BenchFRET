@@ -1,0 +1,32 @@
+function [traces] = python_export_traces(parent)
+
+    fprintf("exporting traces")
+
+    states = num2cell(parent.controls.min_states:parent.controls.max_states);
+
+    group = "all";
+    state = 2;
+
+    analysis = parent.analysis(state);
+    series = parent.series;
+
+    data = {};
+
+    for state = states{1}:states{end}
+        for n = 1:length(series)
+            if ~series(n).exclude
+                range = series(n).crop.min:series(n).crop.max;
+    
+                dat = {};
+                dat{end+1} = analysis.viterbi(n).state(:);
+                dat{end+1} = analysis.viterbi(n).mean(:);
+
+                dat{end+1} = n * ones(length(dat{1}));
+                dat{end+1} = state * ones(length(dat{1}));
+    
+                data{n} = cat(2, n * ones(length(dat{1}), 1), dat{:});
+            end
+        end
+    end
+    traces = cat(1, data{:});
+end

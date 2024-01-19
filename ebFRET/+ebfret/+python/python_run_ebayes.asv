@@ -1,0 +1,11 @@
+function python_run_ebayes(self,  min_states, max_states)
+
+    self.controls.min_states = int32(min_states);
+    self.controls.max_states = int32(mimax_statesn_states);
+
+    disp(self.controls.min_states)
+    disp(self.controls.max_states)
+
+    self.run_ebayes()
+
+end
