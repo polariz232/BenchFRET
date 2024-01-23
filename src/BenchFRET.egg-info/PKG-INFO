@@ -1,0 +1,40 @@
+Metadata-Version: 2.1
+Name: BenchFRET
+Version: 0.0.1
+Summary: smFRET analysis, benchmarking HMM, baysian and Deep learning tools
+Author-email: Beichen <beichen.zhang@exeter.ox.ac.uk>
+Project-URL: Homepage, https://github.com/polariz232/BenchFRET
+Project-URL: Issues, hhttps://github.com/polariz232/BenchFRET/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Requires-Dist: tqdm
+Requires-Dist: mlxtend==0.20.0
+Requires-Dist: pomegranate==0.14.8
+Requires-Dist: PyQt5
+Requires-Dist: hmmlearn
+Requires-Dist: pandas
+Requires-Dist: scipy
+Requires-Dist: spyder
+Requires-Dist: pyqt5
+Requires-Dist: pyqtgraph
+Requires-Dist: originpro
+Requires-Dist: tensorflow[and-cuda]
+Requires-Dist: mat4py
+Requires-Dist: tsaug
+Requires-Dist: tensorboard
+Requires-Dist: parmap
+Requires-Dist: openpyxl
+Requires-Dist: retrying
+Requires-Dist: glob2
+Requires-Dist: pyqt5-tools
+Requires-Dist: tsai
+
+# BenchFRET
+master project on smFRET analysis, benchmarking HMM, baysian and Deep learning tools 

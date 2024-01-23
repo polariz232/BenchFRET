@@ -1,0 +1,45 @@
+[project]
+name = "BenchFRET"
+version = "0.0.1"
+authors = [
+  { name="Beichen", email="beichen.zhang@exeter.ox.ac.uk" },
+]
+description = "smFRET analysis, benchmarking HMM, baysian and Deep learning tools"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "scikit-learn",
+    "tqdm",
+    "mlxtend==0.20.0",
+    "pomegranate==0.14.8",
+    "PyQt5",
+    "hmmlearn",
+    "pandas",
+    "scipy",
+    "spyder",
+    "pyqt5",
+    "pyqtgraph",
+    "originpro",
+    "tensorflow[and-cuda]",
+    "mat4py",
+    "tsaug",
+    "tensorboard",
+    "parmap",
+    "openpyxl",
+    "retrying",
+    "glob2",
+    "pyqt5-tools",
+    "tsai",
+]
+
+[project.urls]
+Homepage = "https://github.com/polariz232/BenchFRET"
+Issues = "hhttps://github.com/polariz232/BenchFRET/issues"
