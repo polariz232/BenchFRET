@@ -1,7 +1,7 @@
 import pickle
 import traceback
 import numpy as np
-from DeepGapSeq.simulation import training_data_1color, training_data_2color
+from BenchFRET.simulation import training_data_1color, training_data_2color
 from time import time
 import os
 import shutil
@@ -113,7 +113,7 @@ class trace_generator():
             self.outdir = os.getcwd()
         
         if folder_name != "":
-            self.outdir = os.path.join(self.outdir, "deepgapseq_simulated_traces")
+            self.outdir = os.path.join(self.outdir, "simulated_traces")
             
         if overwrite and os.path.exists(self.outdir):
                 shutil.rmtree(self.outdir)

@@ -6,7 +6,7 @@ import pandas as pd
 import json
 import copy
 from abc import ABC, abstractmethod
-from BenchFRET.simulation.deepgapseq_trace_generator import trace_generator
+from BenchFRET.simulation.trace_generator import trace_generator
 
 class DataLoader(ABC):
     
@@ -80,6 +80,9 @@ class new_2_colour_simulation(DataLoader):
                                         reduce_memory=self.reduce_memory,
                                         mode=self.mode,
                                         parallel_asynchronous=self.parallel_asynchronous,
+                                        outdir=self.outdir,
+                                        export_mode=self.export_mode,
+                                        export_name=self.export_name,
                                         min_state_diff=self.min_state_diff)        
 
 
