@@ -22,7 +22,7 @@ class DataLoader(ABC):
     def get_labels(self,data_dict):
         return
 
-class new_2_colour_simulation(DataLoader):
+class NewSim(DataLoader): # currently only 2-color simulation supported
 
     def __init__(self,
                  n_traces = 100,
@@ -104,14 +104,14 @@ class new_2_colour_simulation(DataLoader):
         return self.training_labels
 
 
-class load_simulation(DataLoader):
+class SimLoader(DataLoader):
 
     def __init__(self,
                 data_type='pickeldict', # pickledict, text_files, ebfret
                 data_path=''): 
         self.data_type = data_type
         self.data_path = data_path
-        assert os.path.exists(self.data_path)==False, "data_path does not exist"
+        assert os.path.exists(self.data_path)==True, "data_path does not exist"
         if self.data_type == 'pickeldict':
             with open(self.data_path, 'rb') as f:
                 self.dataset = pickle.load(f)
@@ -120,8 +120,14 @@ class load_simulation(DataLoader):
     def get_data(self):
         if self.data_type == 'pickeldict':
             data = self.dataset["data"]
-            labels = self.dataset["labels"]
-        return data, labels
+            if len(data[0][0]) == 2:
+                print(f'shape:({len(data)},{len(data[0])},{len(data[0][0])})')
+                print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA')
+            else:
+                print(f'shape:({len(data)},{len(data[0])},{len(data[0][0])})')
+                print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean')
+
+        return data
         
         # elif self.data_type == 'text_files':
         #     pass
@@ -146,6 +152,8 @@ class load_simulation(DataLoader):
 
         if self.data_type == 'pickeldict':
             labels = self.dataset["labels"]
+            print(f'shape:({len(labels)},{len(labels[0])},1)')
+            print(f'got labels for {len(labels)} traces')
         return labels
         
         # elif self.data_type == 'text_files':
