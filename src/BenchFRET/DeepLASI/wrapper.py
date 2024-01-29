@@ -7,7 +7,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import statistics
-from DeepGapSeq.simulation.deepgapseq_trace_generator import trace_generator
+from BenchFRET.simulation.trace_generator import trace_generator
 import matplotlib.pyplot as plt
 
 

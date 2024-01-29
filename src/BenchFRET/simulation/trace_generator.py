@@ -113,7 +113,7 @@ class trace_generator():
             self.outdir = os.getcwd()
         
         if folder_name != "":
-            self.outdir = os.path.join(self.outdir, "simulated_traces")
+            self.outdir = os.path.join(self.outdir, 'simulated_traces', f"{self.export_mode}")
             
         if overwrite and os.path.exists(self.outdir):
                 shutil.rmtree(self.outdir)
@@ -248,20 +248,20 @@ class trace_generator():
                 
                 np.savetxt(file_path, dat, delimiter=",")
 
-        if self.export_mode == "ebFRET_files":
+        # if self.export_mode == "ebFRET_files":
 
-            print(f"exporting ebFRET files to: {self.outdir}")
+        #     print(f"exporting ebFRET files to: {self.outdir}")
 
-            traces = np.array(training_data)
-            ebFRET_traces = []
-            for i in range(traces.shape[0]):
-                ebFRET_traces.append(np.hstack([np.expand_dims([i] * traces.shape[1], 1), traces[i]]))
-            ebFRET_traces = np.vstack(ebFRET_traces)
-            ebFRET_traces32 = ebFRET_traces.astype(np.float32)
-            trace_path = os.path.join(self.outdir, "simulated-K04-N350-raw-stacked.dat")
-            label_path = os.path.join(self.outdir, "simulated_traces_labels.dat")
-            np.savetxt(trace_path, ebFRET_traces32, delimiter=" ")
-            np.savetxt(label_path, training_labels, delimiter=" ")
+        #     traces = np.array(training_data)
+        #     ebFRET_traces = []
+        #     for i in range(traces.shape[0]):
+        #         ebFRET_traces.append(np.hstack([np.expand_dims([i] * traces.shape[1], 1), traces[i]]))
+        #     ebFRET_traces = np.vstack(ebFRET_traces)
+        #     ebFRET_traces32 = ebFRET_traces.astype(np.float32)
+        #     trace_path = os.path.join(self.outdir, "simulated-K04-N350-raw-stacked.dat")
+        #     label_path = os.path.join(self.outdir, "simulated_traces_labels.dat")
+        #     np.savetxt(trace_path, ebFRET_traces32, delimiter=" ")
+        #     np.savetxt(label_path, training_labels, delimiter=" ")
 
         if self.export_mode == "pickledict":
 
@@ -271,10 +271,13 @@ class trace_generator():
             trace_dictionary["simulation_parameters"]["n_frames"] = self.n_frames
             trace_dictionary["simulation_parameters"]["n_colors"] = self.n_colors
             trace_dictionary["simulation_parameters"]["n_states"] = self.n_states
-            trace_dictionary["simulation_parameters"]["balance_classes"] = self.balance_classes
+            trace_dictionary["simulation_parameters"]["trans_mat"] = self.trans_mat
+            trace_dictionary["simulation_parameters"]["noise"] = self.noise
+            trace_dictionary["simulation_parameters"]["gamma_noise_prob"] = self.gamma_noise_prob
             trace_dictionary["simulation_parameters"]["reduce_memory"] = self.reduce_memory
             trace_dictionary["simulation_parameters"]["mode"] = self.mode
             trace_dictionary["simulation_parameters"]["parallel_asynchronous"] = self.parallel_asynchronous
+            trace_dictionary["simulation_parameters"]["min_state_diff"] = self.min_state_diff
 
             for index, (data, label) in enumerate(zip(training_data, training_labels)):
 

@@ -11,7 +11,7 @@ from BenchFRET.simulation.trace_generator import trace_generator
 class DataLoader(ABC):
     
     @abstractmethod
-    def get_data_dict(self):
+    def get_data(self):
         return  
 
     @abstractmethod
@@ -19,7 +19,7 @@ class DataLoader(ABC):
         return
 
     @abstractmethod
-    def get_data(self,data_dict):
+    def get_labels(self,data_dict):
         return
 
 class new_2_colour_simulation(DataLoader):
@@ -32,7 +32,8 @@ class new_2_colour_simulation(DataLoader):
                  trans_mat=None, # if none, generates random tmat, else uses given tmat
                  noise=(.01, 1.2), # controls bg poisson noise scale factor
                  gamma_noise_prob=.8,  # probability of gamma noise
-                 reduce_memory = False,
+                 reduce_memory = True, # if true, only returns DD, DA
+                                       # if false, returns DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean
                  mode = "state_mode", # state_mode, n_states_mode
                  parallel_asynchronous = False,
                  outdir = "simulated_datasets",
@@ -84,15 +85,71 @@ class new_2_colour_simulation(DataLoader):
                                         export_mode=self.export_mode,
                                         export_name=self.export_name,
                                         min_state_diff=self.min_state_diff)        
+        
+        self.training_data, self.training_labels = self.generator.generate_traces()
 
+    def get_data(self):
 
-    def get_data_dict(self):
-
-        training_data,training_labels = self.generator.generate_traces()
-        return training_data,training_labels
+        if self.reduce_memory:
+            print("fetched data: DD, DA")
+        else:
+            print("fetched data: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean")
+            return self.training_data
 
     def get_parameters(self,data_dict):
         pass
 
-    def get_data(self,data_dict):
-        pass
+    def get_labels(self):
+
+        return self.training_labels
+
+
+class load_simulation(DataLoader):
+
+    def __init__(self,
+                data_type='pickeldict', # pickledict, text_files, ebfret
+                data_path=''): 
+        self.data_type = data_type
+        self.data_path = data_path
+        assert os.path.exists(self.data_path)==False, "data_path does not exist"
+        if self.data_type == 'pickeldict':
+            with open(self.data_path, 'rb') as f:
+                self.dataset = pickle.load(f)
+        # add text_files, ebfret later
+
+    def get_data(self):
+        if self.data_type == 'pickeldict':
+            data = self.dataset["data"]
+            labels = self.dataset["labels"]
+        return data, labels
+        
+        # elif self.data_type == 'text_files':
+        #     pass
+
+        # else:
+        #     pass
+
+    def get_parameters(self):
+
+        if self.data_type == 'pickeldict':
+            param_dict = self.dataset["simulation_parameters"]
+            print(f'got parameters dictionary containing the following keys:{list(param_dict.keys())}')
+        return param_dict
+        
+        # elif self.data_type == 'text_files':
+        #     pass
+
+        # else:
+        #     pass
+    
+    def get_labels(self):
+
+        if self.data_type == 'pickeldict':
+            labels = self.dataset["labels"]
+        return labels
+        
+        # elif self.data_type == 'text_files':
+        #     pass
+
+        # else:
+        #     pass

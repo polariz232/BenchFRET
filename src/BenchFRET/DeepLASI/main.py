@@ -3,8 +3,8 @@ import os
 import numpy as np
 import importlib
 import importlib.resources as resources
-from DeepGapSeq.DeepLASI.dataloader import create_dataset
-from DeepGapSeq.DeepLASI.deepLASI_architectures import build_model
+from BenchFRET.DeepLASI.dataloader import create_dataset
+from BenchFRET.DeepLASI.deepLASI_architectures import build_model
 import tensorflow as tf
 
 module_path = resources.files(importlib.import_module(f'DeepGapSeq.InceptionFRET'))
