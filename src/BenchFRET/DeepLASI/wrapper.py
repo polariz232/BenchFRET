@@ -77,7 +77,7 @@ class DeepLasiWrapper():
 
         self.deeplasi_models = {"states": {}, "n_states": "", "trace": ""}
 
-        model_directory = resources.files(importlib.import_module(f'DeepGapSeq.DeepLASI'))
+        model_directory = resources.files(importlib.import_module(f'BenchFRET.DeepLASI'))
 
         if n_colors.isdigit():
             self.n_colors = int(n_colors)

@@ -7,7 +7,7 @@ from BenchFRET.DeepLASI.dataloader import create_dataset
 from BenchFRET.DeepLASI.deepLASI_architectures import build_model
 import tensorflow as tf
 
-module_path = resources.files(importlib.import_module(f'DeepGapSeq.InceptionFRET'))
+module_path = resources.files(importlib.import_module(f'BenchFRET.DeepLASI'))
 dataset_path = os.path.join(module_path, "deepgapseq_simulated_traces","dataset_2023_11_22.pkl")
 
 with open(dataset_path, 'rb') as f:

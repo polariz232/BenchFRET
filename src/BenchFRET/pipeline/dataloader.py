@@ -121,10 +121,10 @@ class SimLoader(DataLoader):
         if self.data_type == 'pickeldict':
             data = self.dataset["data"]
             if len(data[0][0]) == 2:
-                print(f'shape:({len(data)},{len(data[0])},{len(data[0][0])})')
+                print(f'trace data shape:({len(data)},{len(data[0])},{len(data[0][0])})')
                 print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA')
             else:
-                print(f'shape:({len(data)},{len(data[0])},{len(data[0][0])})')
+                print(f'label data shape:({len(data)},{len(data[0])},{len(data[0][0])})')
                 print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean')
 
         return data
