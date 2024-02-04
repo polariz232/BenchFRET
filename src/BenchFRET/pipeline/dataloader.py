@@ -169,3 +169,43 @@ class SimLoader(DataLoader):
 
         # else:
         #     pass
+
+class RealLoader_gapseq(DataLoader): # for loading data from gapseq, 1 colour with no labels
+    
+        def __init__(self,
+                    file_paths,
+                    data_type='json',
+                    traces=[],
+                    trace_limit=1200 
+                    ): 
+            self.data_type = data_type
+            self.file_paths = file_paths
+            self.traces = traces
+            self.trace_limit = trace_limit
+
+        def get_data(self):
+            if self.data_type == 'json':
+                for file_path in self.file_paths:
+                    try:
+                        with open(file_path, 'r') as f:
+                            d = json.load(f)
+                            data = np.array(d["data"])
+                            data = [dat for dat in data]
+                            for dat in data:                    
+                                if len(dat) > 200:
+                                    dat = dat[:self.trace_limit]
+                                    self.traces.append(list(dat))
+                    except:
+                        print(traceback.format_exc())
+                        pass
+                traces = np.array(self.traces)
+                traces = traces.reshape(traces.shape[0], traces.shape[1], 1)
+                print(f'got {traces.shape[0]} traces of length {traces.shape[1]}')
+                print()
+                return traces
+        
+        def get_parameters(self):
+            pass
+
+        def get_labels(self):
+            pass

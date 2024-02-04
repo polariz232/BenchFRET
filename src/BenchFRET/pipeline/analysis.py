@@ -27,13 +27,15 @@ def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None
     fig.show()
 
 
-def get_dwell_times(states, plot=True, plot_mode='probability',bin_size=10):
+def get_dwell_times(states, plot=True, plot_mode='probability',bin_size=10,all_together=False):
     """
     Calculate the dwell times for each state given state array of shape (None,1).
     and plot the histogram of the dwell times for each state.
     plot mode = 'probability' or ''(as for 'count' mode)
     """
     print("Calculating dwell times...")
+    if all_together:
+        states = np.array(states).ravel()
     dwell_times = {}
     current_state = states[0]
     dwell_start = 0
@@ -88,9 +90,14 @@ def plot_FRET_efficiency_histogram(traces):
     print("Plotting FRET efficiency histogram...")
     if type(traces) is not np.ndarray:
         traces = np.array(traces)
-    if len(traces.shape) == 3:
+    if len(traces.shape) == 3 and traces.shape[2] == 2:
         traces = traces.reshape(-1,2)
-    E_FRET = traces[:,1]/(traces[:,0]+traces[:,1])
+        E_FRET = traces[:,1]/(traces[:,0]+traces[:,1])
+    elif len(traces.shape) == 3 and traces.shape[2] == 1:
+        traces = traces.reshape(-1,1)
+        E_FRET = traces.ravel()
+    else:
+        E_FRET = traces[:,1]/(traces[:,0]+traces[:,1])
     fig = go.Figure()
     fig.add_trace(go.Histogram(x=E_FRET,name='E_FRET',histnorm='probability'))
     fig.update_layout(
