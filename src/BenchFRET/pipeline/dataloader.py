@@ -94,14 +94,15 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
             print("fetched data: DD, DA")
         else:
             print("fetched data: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean")
-            return self.training_data
+        print()    
+        return np.array(self.training_data)
 
     def get_parameters(self,data_dict):
         pass
 
     def get_labels(self):
 
-        return self.training_labels
+        return np.array(self.training_labels)
 
 
 class SimLoader(DataLoader):
@@ -120,14 +121,19 @@ class SimLoader(DataLoader):
     def get_data(self):
         if self.data_type == 'pickeldict':
             data = self.dataset["data"]
-            if len(data[0][0]) == 2:
-                print(f'trace data shape:({len(data)},{len(data[0])},{len(data[0][0])})')
-                print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA')
+            data = np.array(data)
+            if data.shape[2] == 2:
+                print(f'traces are of shape:{data.shape}')
+                print(f'got {data.shape[0]} traces containing {data.shape[2]} features: DD, DA')
+                print()
+                return data
             else:
-                print(f'label data shape:({len(data)},{len(data[0])},{len(data[0][0])})')
-                print(f'got {len(data)} traces containing {len(data[0][0])} features: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean')
-
-        return data
+                print(f'trace are of shape:{data.shape}')
+                print(f'got {data.shape[0]} traces containing {data.shape[2]} features: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean')
+                data_lite = data[:,:,:2]
+                print(f'extracted only DD, DA as output 1, the full data as output 2')
+                print()
+                return data_lite, data
         
         # elif self.data_type == 'text_files':
         #     pass
@@ -140,6 +146,7 @@ class SimLoader(DataLoader):
         if self.data_type == 'pickeldict':
             param_dict = self.dataset["simulation_parameters"]
             print(f'got parameters dictionary containing the following keys:{list(param_dict.keys())}')
+            print()
         return param_dict
         
         # elif self.data_type == 'text_files':
@@ -151,9 +158,10 @@ class SimLoader(DataLoader):
     def get_labels(self):
 
         if self.data_type == 'pickeldict':
-            labels = self.dataset["labels"]
-            print(f'shape:({len(labels)},{len(labels[0])},1)')
-            print(f'got labels for {len(labels)} traces')
+            labels = np.array(self.dataset["labels"])
+            print(f'labels are of shape:{labels.shape}')
+            print(f'got labels for {labels.shape[0]} traces')
+        print()
         return labels
         
         # elif self.data_type == 'text_files':
