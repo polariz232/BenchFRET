@@ -8,9 +8,12 @@ def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None
         trace = trace / np.std(trace)
     fig = go.Figure()
     x = np.arange(trace.shape[0])
-    fig.add_trace(go.Scatter(x=x, y=trace[:,0],line=dict(color='firebrick', width=1),name='Donor'))
-    fig.add_trace(go.Scatter(x=x, y=trace[:,1],line=dict(color='cornflowerblue', width=1), name='Acceptor'))
-    
+    if trace.shape[1] == 2:
+        fig.add_trace(go.Scatter(x=x, y=trace[:,0],line=dict(color='firebrick', width=1),name='Donor'))
+        fig.add_trace(go.Scatter(x=x, y=trace[:,1],line=dict(color='cornflowerblue', width=1), name='Acceptor'))
+    if trace.shape[1] == 1:
+        fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='black', width=1),name='E_FRET'))
+
     if label is not None:
         label = (label - np.max(label)-2)
         fig.add_trace(go.Scatter(x=x, y=label,line=dict(color='gold', width=1), name='Fret State'))
