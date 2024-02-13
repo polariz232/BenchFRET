@@ -107,7 +107,7 @@ class trace_generator():
         assert n_colors in [1,2], "available colours: 1, 2"
         assert export_mode in ["","text_files", "pickledict","ebfret", "ebFRET_files"], "available export modes: '','text_files', 'pickledict', 'ebfret', 'ebFRET_files'"
         
-    def check_outdir(self, overwrite=True, folder_name = "simulated_traces"):
+    def check_outdir(self, overwrite=False, folder_name = "simulated_traces"):
     
         if os.path.exists(self.outdir) == False:
             self.outdir = os.getcwd()
@@ -115,8 +115,8 @@ class trace_generator():
         if folder_name != "":
             self.outdir = os.path.join(self.outdir, 'simulated_traces', f"{self.export_mode}")
             
-        if overwrite and os.path.exists(self.outdir):
-                shutil.rmtree(self.outdir)
+        # if overwrite and os.path.exists(self.outdir):
+        #         shutil.rmtree(self.outdir)
 
         if os.path.exists(self.outdir) == False:
             os.mkdir(self.outdir)
