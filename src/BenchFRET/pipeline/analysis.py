@@ -1,16 +1,19 @@
 import numpy as np
 import plotly.graph_objects as go
+from BenchFRET.DeepLASI.wrapper import DeepLasiWrapper
 
-def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None):
+def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None,E_FRET=True):
     print("Visualizing trace...")
     if normalize:
         trace = trace - np.mean(trace)
         trace = trace / np.std(trace)
     fig = go.Figure()
     x = np.arange(trace.shape[0])
+    
     if trace.shape[1] == 2:
         fig.add_trace(go.Scatter(x=x, y=trace[:,0],line=dict(color='firebrick', width=1),name='Donor'))
         fig.add_trace(go.Scatter(x=x, y=trace[:,1],line=dict(color='cornflowerblue', width=1), name='Acceptor'))
+    
     if trace.shape[1] == 1:
         fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='black', width=1),name='E_FRET'))
 
@@ -25,8 +28,12 @@ def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None
         fig.add_trace(go.Scatter(x=x, y=predicted_states,line=dict(color='green', width=1), name='Predicted State'))
         for i in np.unique(predicted_states):
             fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='lightgreen',width=1,dash='dash'))
-    # E_FRET = trace[:,1]/(trace[:,0]+trace[:,1])
-    # fig.add_trace(go.Scatter(x=np.arange(trace.shape[0]), y=E_FRET, mode='markers', name='E_FRET'))
+   
+    if E_FRET:
+        E_FRET = trace[:,1]/(trace[:,0]+trace[:,1])
+        E_FRET = np.clip(E_FRET,0,1) - 2.5
+        fig.add_trace(go.Scatter(x=x, y=E_FRET, line=dict(color='black', width=1), name='E_FRET'))
+   
     fig.show()
 
 
@@ -88,7 +95,7 @@ def get_dwell_times(states, plot=True, plot_mode='probability',bin_size=10,all_t
 
     return dwell_times   
     
-def plot_FRET_efficiency_histogram(traces):
+def plot_FRET_efficiency_histogram(traces=None,true_states=None):
     
     print("Plotting FRET efficiency histogram...")
     if type(traces) is not np.ndarray:
@@ -102,7 +109,9 @@ def plot_FRET_efficiency_histogram(traces):
     else:
         E_FRET = traces[:,1]/(traces[:,0]+traces[:,1])
     fig = go.Figure()
-    fig.add_trace(go.Histogram(x=E_FRET,name='E_FRET',histnorm='probability'))
+    fig.add_trace(go.Histogram(x=E_FRET,name='E_FRET_observed',histnorm='probability'))
+    if true_states is not None:
+        fig.add_trace(go.Histogram(x=true_states,name='E_FRET_true',histnorm='probability'))
     fig.update_layout(
         title='Histogram of FRET Efficiency',
         xaxis_title='E_FRET',

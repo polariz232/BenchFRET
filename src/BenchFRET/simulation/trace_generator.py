@@ -41,7 +41,7 @@ class trace_generator():
                     noise_tolerance=.3, # tolerence above which traces are identified as noisy
                     s_tolerance=(0.05, 0.95), # tolerance for bleanched traces 
                     randomize_prob=0.25, # prob for artefacts
-                    bg_overestimate_prob=.1, # prob for artefacts
+                    bg_overestimate_prob=.1, #  prob for artefacts
                     falloff_lifetime=500, # related to aggregation
                     falloff_prob=0.1, # related to aggregation
                     balance_bleach=True, 
@@ -113,7 +113,7 @@ class trace_generator():
             self.outdir = os.getcwd()
         
         if folder_name != "":
-            self.outdir = os.path.join(self.outdir, 'simulated_traces', f"{self.export_mode}")
+            self.outdir = os.path.join(self.outdir, f"{self.export_mode}")
             
         # if overwrite and os.path.exists(self.outdir):
         #         shutil.rmtree(self.outdir)
@@ -284,7 +284,7 @@ class trace_generator():
                 trace_dictionary["data"].append(data)
                 trace_dictionary["labels"].append(label)
 
-            file_path = os.path.join(self.outdir, f"{self.export_name}_{date}.pkl")
+            file_path = os.path.join(self.outdir, f"{self.export_name}.pkl")
 
             with open(file_path, 'wb') as handle:
                 pickle.dump(trace_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)

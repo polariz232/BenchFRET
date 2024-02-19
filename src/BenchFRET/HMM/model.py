@@ -66,7 +66,7 @@ class HMM_pg(Model):
         if best_only:
             best = np.argmax(score)
             score = score[best]
-            tmat = self.model.dense_transition_matrix()[best]
+            tmat = self.model.dense_transition_matrix()
             aligned_labels = permutation_of_labels[best]    
             if verbose:
                 print(f'correct estimation rate: {score}')

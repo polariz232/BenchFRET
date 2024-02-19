@@ -32,6 +32,8 @@ class DeepLasiWrapper():
 
         self.check_gpu()
 
+        self.initialise_models()
+
     def print_notification(self, message):
         if self.AnalysisGUI is not None:
             self.AnalysisGUI.print_notification(message)
@@ -273,8 +275,6 @@ class DeepLasiWrapper():
         if correct_format:
             traces = self.preprocess_data(traces)
 
-            self.initialise_models()
-
             self.print_notification(f"Predicting DeepLASI states for {len(traces)} traces...")
 
             if deeplasi_mode.lower() == "fast":
@@ -322,7 +322,7 @@ class DeepLasiWrapper():
             else:
                 """Predict the states of all traces one at a time"""
 
-                for index, trace in tqdm(enumerate(traces), total=traces.shape[0]):
+                for index, trace in tqdm(enumerate(traces), total=len(traces)):
                     trace = tf.convert_to_tensor([trace], dtype=tf.float32)
 
                     # predict whether a trace is dynamic or static

@@ -209,3 +209,33 @@ class RealLoader_gapseq(DataLoader): # for loading data from gapseq, 1 colour wi
 
         def get_labels(self):
             pass
+
+class RealLoader_cropped(DataLoader): # for loading data from gapseq, 1 colour with no labels
+    
+        def __init__(self,
+                    path,
+                    data_type='xlsx',
+                    reduce_memory=True
+                    ): 
+            self.data_type = data_type
+            self.path = path
+
+        def get_data(self):
+            if self.data_type == 'xlsx':
+                df = pd.read_excel(self.path, skiprows=6).iloc[:,2:]
+                traces_full = np.array_split(df, np.ceil(len(df.columns) / 5),axis=1)
+                traces_full = [trace.dropna(axis=0, how='all') for trace in traces_full]
+                traces = []
+                for trace in traces_full:
+                    trace = np.array(trace)[:,:2]
+                    traces.append(trace)
+                print(f'got {len(traces)} traces of various length')
+                print()
+                return traces
+        
+        def get_parameters(self):
+            pass
+
+        def get_labels(self):
+            pass
+

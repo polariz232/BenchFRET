@@ -413,6 +413,8 @@ def simulate_2color_traces(
         )
 
         AA *= np.random.uniform(aa_offset[0], aa_offset[1])
+
+        # add fluctuations
         fluct_probs = np.random.uniform(0, 1, 2)
         if fluct_probs[0] < .3:  # green
             fluct = np.sin(np.linspace(0, np.random.randint(10, 500), n_frames)) * np.random.uniform(.0, .02) + 1
