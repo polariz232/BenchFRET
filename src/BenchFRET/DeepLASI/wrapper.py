@@ -253,7 +253,7 @@ class DeepLasiWrapper():
 
         return prediction_list, confidence_list
 
-    def predict(self, traces=[], n_colors=None, n_states=None, deeplasi_mode="fast", progress_callback=None):
+    def predict(self, traces=[], n_colors=None, n_states=None, deeplasi_mode="fast", progress_callback=None,confidence=False):
         """
         The main method for predicting DeepLASI states from traces
 
@@ -270,6 +270,7 @@ class DeepLasiWrapper():
         correct_format, traces = self.check_data_format(traces)
 
         states_predictions = []
+        states_confidances = []
         trace_labels = []
 
         if correct_format:
@@ -307,6 +308,8 @@ class DeepLasiWrapper():
                         state_prediction, state_confidence = self._predict_states(trace, n_states)
 
                         states_predictions.append(state_prediction[0])
+                        if confidence:
+                            states_confidances.append(state_confidence[0])
 
                     else:
                         # if the trace is static or the number of states is not 2,3,4, predict all zeros for the states
@@ -350,6 +353,8 @@ class DeepLasiWrapper():
                             state_prediction, state_confidence = self._predict_states(trace, n_states_pred[0])
 
                     states_predictions.append(state_prediction[0])
+                    if confidence:
+                        states_confidances.append(state_confidence[0])
                     trace_labels.append(trace_label[0])
 
                     if progress_callback is not None:
@@ -358,6 +363,9 @@ class DeepLasiWrapper():
 
         self.deeplasi_states = states_predictions
         self.deeplasi_labels = trace_labels
+        if confidence:
+            self.deeplasi_confidances = states_confidances
+            return self.deeplasi_states, self.deeplasi_labels, self.deeplasi_confidances
 
         return self.deeplasi_states, self.deeplasi_labels
 

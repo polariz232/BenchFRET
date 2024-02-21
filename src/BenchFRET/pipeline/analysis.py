@@ -1,39 +1,51 @@
 import numpy as np
 import plotly.graph_objects as go
 from BenchFRET.DeepLASI.wrapper import DeepLasiWrapper
+import itertools
 
-def visualize_single_trace(trace,normalize=True,label=None,predicted_states=None,E_FRET=True):
+def visualize_single_trace(trace,normalize=True,separate_traces=False,label=None,predicted_states=None,E_FRET=True,dark_mode=True):
     print("Visualizing trace...")
     if normalize:
         trace = trace - np.mean(trace)
         trace = trace / np.std(trace)
+
     fig = go.Figure()
     x = np.arange(trace.shape[0])
     
     if trace.shape[1] == 2:
-        fig.add_trace(go.Scatter(x=x, y=trace[:,0],line=dict(color='firebrick', width=1),name='Donor'))
-        fig.add_trace(go.Scatter(x=x, y=trace[:,1],line=dict(color='cornflowerblue', width=1), name='Acceptor'))
+        fig.add_trace(go.Scatter(x=x, y=trace[:,0],line=dict(color='chartreuse', width=1),name='Donor'))
+        fig.add_trace(go.Scatter(x=x, y=trace[:,1],line=dict(color='red', width=1), name='Acceptor'))
     
     if trace.shape[1] == 1:
-        fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='black', width=1),name='E_FRET'))
-
+        if dark_mode:
+            fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='yellow', width=1),name='E_FRET'))
+        else:
+            fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='black', width=1),name='E_FRET'))
     if label is not None:
         label = (label - np.max(label)-2)
         fig.add_trace(go.Scatter(x=x, y=label,line=dict(color='gold', width=1), name='Fret State'))
-        for i in np.unique(label):
-            fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='pink',width=1,dash='dash'))
+        # for i in np.unique(label):
+        #     fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='pink',width=1,dash='dash'))
     
     if predicted_states is not None:
         predicted_states = (predicted_states - np.max(predicted_states)-2)
-        fig.add_trace(go.Scatter(x=x, y=predicted_states,line=dict(color='green', width=1), name='Predicted State'))
-        for i in np.unique(predicted_states):
-            fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='lightgreen',width=1,dash='dash'))
+        if dark_mode:
+            fig.add_trace(go.Scatter(x=x, y=predicted_states,line=dict(color='yellow', width=1), name='Predicted State'))
+        else:
+            fig.add_trace(go.Scatter(x=x, y=predicted_states,line=dict(color='black', width=1), name='Predicted State'))
+        # for i in np.unique(predicted_states):
+        #     fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='lightgreen',width=1,dash='dash'))
    
     if E_FRET:
         E_FRET = trace[:,1]/(trace[:,0]+trace[:,1])
-        E_FRET = np.clip(E_FRET,0,1) - 2.5
-        fig.add_trace(go.Scatter(x=x, y=E_FRET, line=dict(color='black', width=1), name='E_FRET'))
-   
+        E_FRET = np.clip(E_FRET,0,1)*3 -4
+        fig.add_trace(go.Scatter(x=x, y=E_FRET, line=dict(color='deepskyblue', width=1), name='E_FRET'))
+    
+    if dark_mode:
+        fig.update_layout(plot_bgcolor='black',paper_bgcolor='black',font=dict(color='white'))
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='gray', griddash='dash')  
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='gray', griddash='dash')  
+
     fig.show()
 
 
@@ -118,16 +130,50 @@ def plot_FRET_efficiency_histogram(traces=None,true_states=None):
         yaxis_title='Probability')
     fig.show()
 
-def get_score(labels, detected_states):
+def get_performance(n_states,detected_states,labels):
 
     scores = []
+    aligned_labels = []
     for k in range(len(labels)):
-        score = 0
-        for i in range(labels[k].shape[0]):
-            if labels[k][i] == detected_states[k][i]:
-                score += 1
-        scores.append(score/labels[k].shape[0])
+        score, aligned_label = get_single_trace_score(n_states,detected_states[k], labels[k])
+        scores.append(score)
+        aligned_labels.append(aligned_label)
     average = sum(scores)/len(scores)
     print(f'accuracy for individual traces is {scores}')
     print(f'overall average accuracy is {average}')
-    return scores, average
+    return average, scores, aligned_labels
+
+def get_single_trace_score(n_states,predicted_states, labels, verbose=False, best_only=True): 
+    score = []
+    permutation_of_labels = permute_array_values(labels, n_states)
+    for perm in permutation_of_labels:
+        mark = 0
+        for i in range(predicted_states.shape[0]):
+            if predicted_states[i] == perm[i]:
+                mark += 1
+        mark = mark/len(predicted_states)
+        score.append(mark)
+    if best_only:
+        best = np.argmax(score)
+        score = score[best]
+        aligned_labels = permutation_of_labels[best]    
+    if verbose:
+        print(f'individual trace best score is : {score}')    
+    return score, aligned_labels
+
+def permute_array_values(arr, n):
+    # Generate all permutations of the range of values
+    value_permutations = itertools.permutations(range(n))
+
+    # Initialize an empty list to store the permuted arrays
+    permuted_arrays = []
+
+    for perm in value_permutations:
+        # Create a mapping from original values to permuted values
+        mapping = np.array(perm)
+
+        # Apply the mapping to the array
+        permuted_array = mapping[arr.astype(int)]
+        permuted_arrays.append(permuted_array)
+
+    return permuted_arrays
