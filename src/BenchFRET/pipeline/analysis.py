@@ -2,6 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 from BenchFRET.DeepLASI.wrapper import DeepLasiWrapper
 import itertools
+import pandas as pd
 
 def visualize_single_trace(trace,normalize=True,separate_traces=False,label=None,predicted_states=None,E_FRET=True,dark_mode=True):
     print("Visualizing trace...")
@@ -118,8 +119,10 @@ def plot_FRET_efficiency_histogram(traces=None,true_states=None):
     elif len(traces.shape) == 3 and traces.shape[2] == 1:
         traces = traces.reshape(-1,1)
         E_FRET = traces.ravel()
-    else:
+    elif len(traces.shape) == 2:
         E_FRET = traces[:,1]/(traces[:,0]+traces[:,1])
+    else:
+        E_FRET = traces
     fig = go.Figure()
     fig.add_trace(go.Histogram(x=E_FRET,name='E_FRET_observed',histnorm='probability'))
     if true_states is not None:
@@ -177,3 +180,133 @@ def permute_array_values(arr, n):
         permuted_arrays.append(permuted_array)
 
     return permuted_arrays
+
+def draw_confusion_matrix(confusion_matrix):
+
+    plt.imshow(confusion_matrix, cmap='Blues')
+    # Add percentage on each block
+    total = np.sum(confusion_matrix)
+    for i in range(confusion_matrix.shape[0]):
+        for j in range(confusion_matrix.shape[0]):            
+            plt.annotate(f'{confusion_matrix[i,j]:.2f}', (j, i), ha='center', va='center')
+
+    plt.colorbar()
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    if confusion_matrix.shape[0] == 2:
+        plt.xticks([0, 1], ['Class 0', 'Class 1'])
+        plt.yticks([0, 1], ['Class 0', 'Class 1'])
+    elif confusion_matrix.shape[0] == 3:
+        plt.xticks([0, 1, 2], ['Class 0', 'Class 1', 'Class 2'])
+        plt.yticks([0, 1, 2], ['Class 0', 'Class 1', 'Class 2'])
+    else:
+        plt.xticks([0, 1, 2, 3], ['Class 0', 'Class 1', 'Class 2', 'Class 3'])
+        plt.yticks([0, 1, 2, 3], ['Class 0', 'Class 1', 'Class 2', 'Class 3'])
+        
+    plt.title('Aggregate Confusion Matrix')
+    plt.show()
+
+def draw_performance_plot(df, to_compare='average_precision',save_path=None):
+    if type(to_compare) is not list:
+        fig = go.Figure(data=[go.Scatter3d(
+            x=df['noise'],
+            y=df['trans_rate'],
+            z=df[to_compare],
+            mode='markers',
+            marker=dict(
+                size=5,
+                color=pd.to_numeric(df['noise'], errors='coerce'),  # Set color based on the 'noise' column
+                colorscale='Viridis',  # Choose a colorscale
+                opacity=0.8
+            )
+        )])
+
+        # Set the layout of the graph
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='Noise',
+                yaxis_title='Transition Rate',
+                zaxis_title= to_compare
+            )
+        )
+
+    else:
+        fig = go.Figure()
+        colours = ['blue','red','green','yellow']
+        for i,metric in enumerate(to_compare):
+            fig.add_trace(go.Scatter3d(
+                x=df['noise'],
+                y=df['trans_rate'],
+                z=df[metric],
+                mode='markers',
+                marker=dict(
+                    size=5,
+                    color=colours[i],
+                    opacity=0.8
+                ),
+                name=metric  # Specify the name for the trace
+            ))
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='Noise',
+                yaxis_title='Transition Rate',
+            )
+        )
+
+    # Show the graph
+    fig.show()
+    if save_path is not None:
+        fig.write_html(save_path)
+
+def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision'):
+    '''
+    compare hmm and deeplasi performance (accuracy, precision, recall) in 3D plot
+    '''
+    fig = go.Figure()
+
+    # Add data from df_hmm
+    fig.add_trace(go.Scatter3d(
+        x=df_hmm['noise'],
+        y=df_hmm['trans_rate'],
+        z=df_hmm['accuracy'],
+        mode='markers',
+        marker=dict(
+            size=5,
+            color='blue',
+            # color=pd.to_numeric(df_hmm['noise'], errors='coerce'),  # Set color based on the 'noise' column
+            # colorscale='Viridis',  # Choose a colorscale
+            opacity=0.8
+        ),
+        name='df_hmm'  # Specify the name for the trace
+    ))
+
+    # Add data from df_deep
+    fig.add_trace(go.Scatter3d(
+        x=df_deep['noise'],
+        y=df_deep['trans_rate'],
+        z=df_deep['accuracy'],
+        mode='markers',
+        marker=dict(
+            size=5,
+            color='red',
+            # color=pd.to_numeric(df_deep['noise'], errors='coerce'),  # Set color based on the 'noise' column
+            # colorscale='redor',  # Choose a colorscale
+            opacity=0.8
+        ),
+        name='df_deep'  # Specify the name for the trace
+    ))
+
+    # Set the layout of the graph
+    fig.update_layout(
+        scene=dict(
+            xaxis_title='Noise',
+            yaxis_title='Transition Rate',
+            zaxis_title= to_compare
+        )
+    )
+
+    # Show the graph
+    fig.show()
+    
+    if save_path is not None:
+        fig.write_html(save_path)
