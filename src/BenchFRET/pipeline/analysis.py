@@ -133,7 +133,7 @@ def plot_FRET_efficiency_histogram(traces=None,true_states=None):
         yaxis_title='Probability')
     fig.show()
 
-def get_performance(n_states,detected_states,labels):
+def get_performance(n_states,detected_states,labels,verbose=True):
 
     scores = []
     aligned_labels = []
@@ -142,8 +142,9 @@ def get_performance(n_states,detected_states,labels):
         scores.append(score)
         aligned_labels.append(aligned_label)
     average = sum(scores)/len(scores)
-    print(f'accuracy for individual traces is {scores}')
-    print(f'overall average accuracy is {average}')
+    if verbose:
+        print(f'accuracy for individual traces is {scores}')
+        print(f'overall average accuracy is {average}')
     return average, scores, aligned_labels
 
 def get_single_trace_score(n_states,predicted_states, labels, verbose=False, best_only=True): 
@@ -258,7 +259,7 @@ def draw_performance_plot(df, to_compare='average_precision',save_path=None):
     if save_path is not None:
         fig.write_html(save_path)
 
-def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision'):
+def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision',names=['input1','input2']):
     '''
     compare hmm and deeplasi performance (accuracy, precision, recall) in 3D plot
     '''
@@ -268,7 +269,7 @@ def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision'):
     fig.add_trace(go.Scatter3d(
         x=df_hmm['noise'],
         y=df_hmm['trans_rate'],
-        z=df_hmm['accuracy'],
+        z=df_hmm[to_compare],
         mode='markers',
         marker=dict(
             size=5,
@@ -277,14 +278,14 @@ def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision'):
             # colorscale='Viridis',  # Choose a colorscale
             opacity=0.8
         ),
-        name='df_hmm'  # Specify the name for the trace
+        name=names[0]  # Specify the name for the trace
     ))
 
     # Add data from df_deep
     fig.add_trace(go.Scatter3d(
         x=df_deep['noise'],
         y=df_deep['trans_rate'],
-        z=df_deep['accuracy'],
+        z=df_deep[to_compare],
         mode='markers',
         marker=dict(
             size=5,
@@ -293,7 +294,7 @@ def draw_compare_plot(df_hmm, df_deep, save_path=None,to_compare='precision'):
             # colorscale='redor',  # Choose a colorscale
             opacity=0.8
         ),
-        name='df_deep'  # Specify the name for the trace
+        name=names[1]  # Specify the name for the trace
     ))
 
     # Set the layout of the graph

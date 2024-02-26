@@ -229,9 +229,10 @@ class DeepLasiWrapper():
 
         return prediction_list, confidence_list
 
-    def _predict_states(self, trace, n_states):
+    def _predict_states(self, trace, n_states, model=None):
         """given a trace and a target number of states, predict the state trace [00011110011....]"""
-
+        if model is not None:
+            model = model
         model = self.deeplasi_models["states"][n_states]
 
         output = model.predict(trace, verbose=None)
