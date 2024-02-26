@@ -31,6 +31,7 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
                  n_states = 2,
                  trans_mat=None, # if none, generates random tmat, else uses given tmat
                  noise=(.01, 1.2), # controls bg poisson noise scale factor
+                 noise_tolerance = 0.3, # noise(std) abouve which trace is discarded
                  gamma_noise_prob=.8,  # probability of gamma noise
                  reduce_memory = True, # if true, only returns DD, DA
                                        # if false, returns DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean
@@ -62,6 +63,7 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
         self.n_states = n_states
         self.trans_mat = trans_mat
         self.noise = noise
+        self.noise_tolerance = noise_tolerance
         self.gamma_noise_prob = gamma_noise_prob
         self.reduce_memory = reduce_memory
         self.mode = mode
@@ -77,6 +79,7 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
                                         n_states=self.n_states,
                                         trans_mat=self.trans_mat,
                                         noise=self.noise,
+                                        noise_tolerance=self.noise_tolerance,
                                         gamma_noise_prob=self.gamma_noise_prob,
                                         reduce_memory=self.reduce_memory,
                                         mode=self.mode,

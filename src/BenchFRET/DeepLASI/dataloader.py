@@ -42,7 +42,7 @@ def preprocess_data(x, y, num_classes=2):
         
     x = normalize_tensor(x)
         
-    y = tf.cast(y, tf.int8)
+    # y = tf.cast(y, tf.int8)
     y = tf.one_hot(y, depth=num_classes)
     
     return x, y
