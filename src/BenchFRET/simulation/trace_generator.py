@@ -9,6 +9,13 @@ import datetime
 import random
 import string
 
+def cohens_d(states_mean,states_std,sample_size):
+
+    pooled_var = ((sample_size[0]-1)*states_std[0]**2 + (sample_size[1]-1)*states_std[1]**2) / (sample_size[0]+sample_size[1]-2)
+    pooled_std = np.sqrt(pooled_var)
+    
+    return abs((states_mean[1]-states_mean[0])/pooled_std)
+
 class trace_generator():
     
     def __init__(self,
@@ -26,6 +33,7 @@ class trace_generator():
                  export_mode = "",
                  export_name = "trace_dataset",
                  min_state_diff=0.1, # minimum intesnity difference between FRET states
+                 cohens_d_and_sort=True, # if true, sorts traces by cohen's d
                  
                     d_lifetime=400, # realted to bleaching
                     a_lifetime=400, # realted to bleaching
@@ -78,6 +86,7 @@ class trace_generator():
         self.export_mode = export_mode
         self.export_name = export_name
         self.min_state_diff = min_state_diff
+        self.cohens_d_and_sort = cohens_d_and_sort
         
         self.d_lifetime = d_lifetime
         self.a_lifetime = a_lifetime
@@ -132,7 +141,26 @@ class trace_generator():
         else:
             self.state_mode = False
             self.n_states_mode = True
-    
+
+    def sort_traces_by_cohens_d(self,traces):
+        pair_list = []
+        for trace in traces:
+            FRET_states = np.unique(trace["label"].values)
+            states_std = []
+            states_mean = []
+            states_size = []
+            for state in FRET_states:
+                states_std.append(trace['E'][trace['label'] == state].std())
+                states_mean.append(trace['E'][trace['label'] == state].mean())
+                states_size.append(len(trace['E'][trace['label'] == state]))
+            cohen_d = cohens_d(states_mean,states_std,states_size)
+            trace['cohen_d'] = cohen_d.repeat(len(trace)) 
+            pair_list.append((trace,cohen_d))
+        sorted_pair_list = sorted(pair_list, key=lambda x: x[1])
+        sorted_traces = [pair[0] for pair in sorted_pair_list]
+
+        return sorted_traces 
+
     def generate_single_colour_traces(self):
         
         traces, _ = training_data_1color.simulate_1color_traces(
@@ -196,9 +224,13 @@ class trace_generator():
             balance_bleach=self.balance_bleach,
             merge_state_labels=self.merge_state_labels,
             omit_bleach=self.omit_bleach,
-            quenching=self.quenching
+            quenching=self.quenching,
         )
         
+        if self.cohens_d_and_sort:
+            traces = self.sort_traces_by_cohens_d(traces)
+
+
         training_data = []
         training_labels = []
         
@@ -219,11 +251,18 @@ class trace_generator():
                         training_data.append(trace[["DD", "DA", "AA"]].values)
 
                 else:
-                    training_data.append(trace[["DD", "DA",
-                                                "AA", "E",
-                                                "E_true", "label",
-                                                "_noise_level",
-                                                "_min_E_diff", "trans_mean"]].values)
+                    if self.cohens_d_and_sort:
+                        training_data.append(trace[["DD", "DA",
+                                                    "AA", "E",
+                                                    "E_true", "label",
+                                                    "cohen_d",
+                                                    "_min_E_diff", "trans_mean"]].values)
+                    else:
+                        training_data.append(trace[["DD", "DA",
+                                                    "AA", "E",
+                                                    "E_true", "label",
+                                                    "_noise_level",
+                                                    "_min_E_diff", "trans_mean"]].values)
             except:
                 print(traceback.format_exc())
                 pass

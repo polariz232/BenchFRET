@@ -1,4 +1,5 @@
 from BenchFRET.pipeline.dataloader import SimLoader
+from BenchFRET.pipeline.dataloader import RealLoader_training_raw
 from BenchFRET.DeepLASI.wrapper import DeepLasiWrapper
 from BenchFRET.pipeline.analysis import get_performance
 import os
@@ -13,6 +14,7 @@ import json
 import importlib
 import importlib.resources as resources
 import tensorflow as tf
+import pickle
 
 def DeepLASI_performance_batch(folder_path,n_colors=2,n_states=2,save_path=None,save_memory=False,retrained_model_name=None):
 
@@ -34,7 +36,7 @@ def DeepLASI_performance_batch(folder_path,n_colors=2,n_states=2,save_path=None,
         data = simloader.get_data()
         labels = simloader.get_labels()
         
-        if retrained_model_name is None:
+        if retrained_model_name is not None:
             model_directory = resources.files(importlib.import_module(f'BenchFRET.DeepLASI'))
             model_path = os.path.join(model_directory,'retrained_models', retrained_model_name)
             model = tf.keras.models.load_model(model_path)
@@ -86,3 +88,26 @@ def aggregate_confusion_matrix(true,predicted,num_labels,mode='count'):
     
     return aggregate_confusion_matrix
 
+def prepare_real_dataset(folder_path,save_path=None):
+
+    file_paths = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    df = pd.DataFrame(columns = ['traces','labels','n_states'])
+    for file in file_paths:
+        loader = RealLoader_training_raw(os.path.join(folder_path, file))
+        traces = loader.get_data()
+        labels,n_states = loader.get_labels()
+        for i in range(len(traces)):
+            df.loc[len(df)] = [traces[i],labels[i],n_states[i]]
+    sub_dfs = df.groupby('n_states')
+    sub_dfs = [sub_dfs.get_group(x) for x in sub_dfs.groups]
+    for i in range(len(sub_dfs)):
+        trace_dictionary = {'data':[],'labels':[],'n_states':[]}
+        trace_dictionary['data'].append(sub_dfs[i]['traces'].values)
+        trace_dictionary['labels'].append(sub_dfs[i]['labels'].values)
+        trace_dictionary['n_states'].append(sub_dfs[i]['n_states'].values)
+        if save_path is not None:
+            with open(os.path.join(save_path,f'real_dataset_{sub_dfs[i]["n_states"].values[0]}_states.pkl'), 'wb') as f:
+                pickle.dump(trace_dictionary,f,protocol=pickle.HIGHEST_PROTOCOL)
+            print(f'prepared real_dataset_{sub_dfs[i]["n_states"].values[0]}_states.pkl')
+        else:
+            raise ValueError('Please specify the save path')        

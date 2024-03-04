@@ -24,12 +24,12 @@ def visualize_single_trace(trace,normalize=True,separate_traces=False,label=None
             fig.add_trace(go.Scatter(x=x, y=trace.ravel(),line=dict(color='black', width=1),name='E_FRET'))
     if label is not None:
         label = (label - np.max(label)-2)
-        fig.add_trace(go.Scatter(x=x, y=label,line=dict(color='gold', width=1), name='Fret State'))
+        fig.add_trace(go.Scatter(x=x, y=label,line=dict(color='white', width=1), name='Fret State'))
         # for i in np.unique(label):
         #     fig.add_shape(type='line',x0=min(x),x1=max(x),y0=i,y1=i,line=dict(color='pink',width=1,dash='dash'))
     
     if predicted_states is not None:
-        predicted_states = (predicted_states - np.max(predicted_states)-2)
+        predicted_states = (predicted_states/np.max(predicted_states)*4)-4
         if dark_mode:
             fig.add_trace(go.Scatter(x=x, y=predicted_states,line=dict(color='yellow', width=1), name='Predicted State'))
         else:
@@ -39,7 +39,7 @@ def visualize_single_trace(trace,normalize=True,separate_traces=False,label=None
    
     if E_FRET:
         E_FRET = trace[:,1]/(trace[:,0]+trace[:,1])
-        E_FRET = np.clip(E_FRET,0,1)*3 -4
+        E_FRET = np.clip(E_FRET,0,1)*4 -4
         fig.add_trace(go.Scatter(x=x, y=E_FRET, line=dict(color='deepskyblue', width=1), name='E_FRET'))
     
     if dark_mode:

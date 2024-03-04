@@ -233,7 +233,8 @@ class DeepLasiWrapper():
         """given a trace and a target number of states, predict the state trace [00011110011....]"""
         if model is not None:
             model = model
-        model = self.deeplasi_models["states"][n_states]
+        else:
+            model = self.deeplasi_models["states"][n_states]
 
         output = model.predict(trace, verbose=None)
 

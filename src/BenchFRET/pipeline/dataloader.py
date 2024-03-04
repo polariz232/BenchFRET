@@ -41,6 +41,7 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
                  export_mode = "",
                  export_name = "trace_dataset",
                  min_state_diff=0.1, # minimum intesnity difference between FRET states
+                 cohens_d_and_sort=False # if True, sorts traces based on cohens_d
                  ):
         
         """
@@ -72,6 +73,7 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
         self.export_mode = export_mode
         self.export_name = export_name
         self.min_state_diff = min_state_diff
+        self.cohens_d_and_sort = cohens_d_and_sort
 
         self.generator = trace_generator(n_traces=int(self.n_traces),
                                         n_frames=self.n_frames,
@@ -87,7 +89,8 @@ class NewSim(DataLoader): # currently only 2-color simulation supported
                                         outdir=self.outdir,
                                         export_mode=self.export_mode,
                                         export_name=self.export_name,
-                                        min_state_diff=self.min_state_diff)        
+                                        min_state_diff=self.min_state_diff,
+                                        cohens_d_and_sort=self.cohens_d_and_sort)        
         
         self.training_data, self.training_labels = self.generator.generate_traces()
 
@@ -132,7 +135,7 @@ class SimLoader(DataLoader):
                 return data
             else:
                 print(f'trace are of shape:{data.shape}')
-                print(f'got {data.shape[0]} traces containing {data.shape[2]} features: DD, DA, AA, E, E_true, label, noise_level, min_E_diff, trans_mean')
+                print(f'got {data.shape[0]} traces containing {data.shape[2]} features: DD, DA, AA, E, E_true, label, cohen_d, min_E_diff, trans_mean')
                 data_lite = data[:,:,:2]
                 print(f'extracted only DD, DA as output 1, the full data as output 2')
                 print()
@@ -175,70 +178,147 @@ class SimLoader(DataLoader):
 
 class RealLoader_gapseq(DataLoader): # for loading data from gapseq, 1 colour with no labels
     
-        def __init__(self,
-                    file_paths,
-                    data_type='json',
-                    traces=[],
-                    trace_limit=1200 
-                    ): 
-            self.data_type = data_type
-            self.file_paths = file_paths
-            self.traces = traces
-            self.trace_limit = trace_limit
+    def __init__(self,
+                file_paths,
+                data_type='json',
+                traces=[],
+                trace_limit=1200 
+                ): 
+        self.data_type = data_type
+        self.file_paths = file_paths
+        self.traces = traces
+        self.trace_limit = trace_limit
 
-        def get_data(self):
-            if self.data_type == 'json':
-                for file_path in self.file_paths:
-                    try:
-                        with open(file_path, 'r') as f:
-                            d = json.load(f)
-                            data = np.array(d["data"])
-                            data = [dat for dat in data]
-                            for dat in data:                    
-                                if len(dat) > 200:
-                                    dat = dat[:self.trace_limit]
-                                    self.traces.append(list(dat))
-                    except:
-                        print(traceback.format_exc())
-                        pass
-                traces = np.array(self.traces)
-                traces = traces.reshape(traces.shape[0], traces.shape[1], 1)
-                print(f'got {traces.shape[0]} traces of length {traces.shape[1]}')
-                print()
-                return traces
-        
-        def get_parameters(self):
-            pass
+    def get_data(self):
+        if self.data_type == 'json':
+            for file_path in self.file_paths:
+                try:
+                    with open(file_path, 'r') as f:
+                        d = json.load(f)
+                        data = np.array(d["data"])
+                        data = [dat for dat in data]
+                        for dat in data:                    
+                            if len(dat) > 200:
+                                dat = dat[:self.trace_limit]
+                                self.traces.append(list(dat))
+                except:
+                    print(traceback.format_exc())
+                    pass
+            traces = np.array(self.traces)
+            traces = traces.reshape(traces.shape[0], traces.shape[1], 1)
+            print(f'got {traces.shape[0]} traces of length {traces.shape[1]}')
+            print()
+            return traces
+    
+    def get_parameters(self):
+        pass
 
-        def get_labels(self):
-            pass
+    def get_labels(self):
+        pass
 
 class RealLoader_cropped(DataLoader): # for loading data from gapseq, 1 colour with no labels
     
-        def __init__(self,
-                    path,
-                    data_type='xlsx',
-                    reduce_memory=True
-                    ): 
-            self.data_type = data_type
-            self.path = path
+    def __init__(self,
+                path,
+                data_type='xlsx',
+                reduce_memory=True
+                ): 
+        self.data_type = data_type
+        self.path = path
 
-        def get_data(self):
-            if self.data_type == 'xlsx':
-                df = pd.read_excel(self.path, skiprows=6).iloc[:,2:]
-                traces_full = np.array_split(df, np.ceil(len(df.columns) / 5),axis=1)
-                traces_full = [trace.dropna(axis=0, how='all') for trace in traces_full]
-                traces = []
-                for trace in traces_full:
-                    trace = np.array(trace)[:,:2]
-                    traces.append(trace)
-                print(f'got {len(traces)} traces of various length')
-                print()
-                return traces
+    def get_data(self):
+        if self.data_type == 'xlsx':
+            df = pd.read_excel(self.path, skiprows=6).iloc[:,2:]
+            traces_full = np.array_split(df, np.ceil(len(df.columns) / 5),axis=1)
+            traces_full = [trace.dropna(axis=0, how='all') for trace in traces_full]
+            traces = []
+            for trace in traces_full:
+                trace = np.array(trace)[:,:2]
+                traces.append(trace)
+            print(f'got {len(traces)} traces of various length')
+            print()
+            return traces
+    
+    def get_parameters(self):
+        pass
+
+    def get_labels(self):
+        pass
+
+class RealLoader_training_raw(DataLoader): # for Loading real data labeled using ebFRET for training
+
+    def __init__(self,
+                path,
+                data_type='xlsx',
+                reduce_memory=True
+                ): 
+        self.data_type = data_type
+        self.path = path
+        if self.data_type == 'xlsx':
+            df = pd.read_excel(self.path, skiprows=6).iloc[:,2:]
+            traces_full = np.array_split(df, np.ceil(len(df.columns) / 10),axis=1)
+            traces_full = [trace.dropna(axis=0, how='all') for trace in traces_full]
+            labeled_traces = []
+            for trace in traces_full:
+                if np.isnan(np.array(trace)[:,9]).all():
+                    continue
+                all_labeled_trace = trace[~np.isnan(trace).any(axis=1)]
+                labeled_traces.append(all_labeled_trace)
+            self.traces_full = labeled_traces
+            
+
+    def get_data(self):
+
+        traces = []
+        for full_trace in self.traces_full:
+            trace = np.array(full_trace)[:,[0,2]]
+            traces.append(trace)
+        print(f'got {len(traces)} traces of various length')
+        print()
+        return traces
+    
+    def get_parameters(self):
+
+        return self.traces_full
+
+    def get_labels(self):
+        labels = []
+        n_states = [] 
+        for trace in self.traces_full:
+            label = np.array(trace)[:,9] 
+            unique_values = sorted(set(label))
+            value_to_label = {value: i for i, value in enumerate(unique_values)}
+            label = [value_to_label[value] for value in label]
+            labels.append(label)
+            n_states.append(len(unique_values))
+
+        print(f'got {len(labels)} labels of n_states: {np.unique(n_states)}')
+        return labels, n_states
+
+class RealLoader_training_dataset(DataLoader): # for Loading real data labeled using ebFRET for training
+    
+    def __init__(self,
+                data_path,
+                data_type='pickeldict',
+                ): 
+        self.data_type = data_type
+        self.data_path = data_path
+        assert os.path.exists(self.data_path)==True, "data_path does not exist"
+        if self.data_type == 'pickeldict':
+            with open(self.data_path, 'rb') as f:
+                self.dataset = pickle.load(f)
+    # add text_files, ebfret later
+
+    def get_data(self):
         
-        def get_parameters(self):
-            pass
+        data = self.dataset["data"][0]
+        print(f'got {len(data)} traces of various length')
+        return data
+    
+    def get_parameters(self):
+        pass
 
-        def get_labels(self):
-            pass
-
+    def get_labels(self):
+        labels = self.dataset["labels"][0]
+        print(f'got {len(labels)} labels of various length')
+        return labels
