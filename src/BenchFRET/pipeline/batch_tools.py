@@ -2,6 +2,7 @@ from BenchFRET.pipeline.dataloader import SimLoader
 from BenchFRET.pipeline.dataloader import RealLoader_training_raw
 from BenchFRET.DeepLASI.wrapper import DeepLasiWrapper
 from BenchFRET.pipeline.analysis import get_performance
+from BenchFRET.HMM.model import HMM_pg
 import os
 from tqdm.notebook import tqdm 
 import re
@@ -111,3 +112,76 @@ def prepare_real_dataset(folder_path,save_path=None):
             print(f'prepared real_dataset_{sub_dfs[i]["n_states"].values[0]}_states.pkl')
         else:
             raise ValueError('Please specify the save path')        
+
+def hmm_predict_dataset(data,labels,n_states):
+    model = HMM_pg(n_states)
+    scores = []
+    aligned_labels = []
+    predicted_states = []
+
+    for k in tqdm(range(data.shape[0])):
+        model.fit(data[k].reshape(1,-1,data.shape[-1]))
+        predicted_state =model.predict(data[k])
+        label = np.array(labels[k])
+        aligned_label, score, fitted_tmat = model.get_performance(predicted_state,label,verbose=False)
+        scores.append(score)
+        aligned_labels.append(aligned_label)
+        predicted_states.append(predicted_state)
+
+    average = sum(scores)/len(scores)
+    print(f'accuracy for individual traces is {scores}')
+    print(f'overall average accuracy is {average}')
+    return average, aligned_labels, predicted_states 
+
+def Hmm_performance_batch(data_folder,n_states=2,save_folder=None,save_memory=False,save_point=20,start_from=None):
+
+    file_paths = [f for f in os.listdir(data_folder) if os.path.isfile(os.path.join(data_folder, f))]
+    
+    if save_folder is None:
+        return ValueError('Please specify path to save folder')
+
+    if save_memory:
+        df = pd.DataFrame(columns=['noise', 'trans_rate', 'average_accuracy','predicted_states','algined_labels'])
+    else:
+        df = pd.DataFrame(columns=['noise', 'trans_rate', 'average_accuracy','average_precision','average_recall','predicted_states','algined_labels'])
+    
+    for i, file in enumerate(tqdm(file_paths)):
+        if start_from is not None:
+            if i < start_from:
+                continue
+    
+        noise, trans_rate = re.findall(r'\d+\.\d+', file)
+        
+        print(f'for this dataset, noise is {noise}, transition_rate is {trans_rate}')
+
+        simloader = SimLoader(data_path=os.path.join(data_folder, file))
+        data = simloader.get_data()
+        labels = simloader.get_labels()
+        
+        average_accuracy, aligned_labels, detected_states = hmm_predict_dataset(data, labels, n_states)
+        
+        if not save_memory:
+            aligned_labels = np.array(aligned_labels)
+            detected_states = np.array(detected_states)
+
+            conf_mat_precision = aggregate_confusion_matrix(aligned_labels,detected_states,n_states,mode='precision')
+            average_precision = 0
+            for i in range(n_states):
+                average_precision += np.count_nonzero(aligned_labels == i)*conf_mat_precision[i,i]
+            average_precision = average_precision/aligned_labels.size # the weighted average precision
+
+            conf_mat_recall = aggregate_confusion_matrix(aligned_labels,detected_states,n_states,mode='recall')
+            average_recall = 0
+            for i in range(n_states):
+                average_recall += np.count_nonzero(aligned_labels == i)*conf_mat_recall[i,i]
+            average_recall = average_recall/aligned_labels.size # the weighted average recall
+
+            df.loc[len(df)] = [noise, trans_rate, average_accuracy, average_precision, average_recall, detected_states, aligned_labels]
+        else:
+            df.loc[len(df)] = [noise, trans_rate, average_accuracy, detected_states, aligned_labels]
+        
+        if (i+1) % save_point == 0:
+            df.to_json(os.path.join(save_folder, f'hmm_prediction_{n_states}_states_{i+1}.json'), orient='split')
+
+    df.to_json(os.path.join(save_folder, f'hmm_prediction_{n_states}_states.json'), orient='split') # remember this orient='split' parameter when loading!
+
